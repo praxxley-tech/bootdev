@@ -18,7 +18,7 @@ func CLICommand(
 		finalCommand := interpolateArgs(command.Command, optionalPositionalArgs)
 		responses[i].FinalCommand = finalCommand
 
-		cmd := exec.Command("sh", "-c", finalCommand)
+		cmd := exec.Command(finalCommand)
 		b, err := cmd.Output()
 		if ee, ok := err.(*exec.ExitError); ok {
 			responses[i].ExitCode = ee.ExitCode()
