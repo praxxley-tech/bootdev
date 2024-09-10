@@ -48,7 +48,9 @@ func HttpTest(
 		var r *http.Request
 		if request.Request.BodyJSON != nil {
 			dat, err := json.Marshal(request.Request.BodyJSON)
-			cobra.CheckErr(err)
+			if err != nil {
+				cobra.CheckErr(err)
+			}
 			r, err = http.NewRequest(request.Request.Method, fmt.Sprintf("%s%s",
 				finalBaseURL, request.Request.Path), bytes.NewBuffer(dat))
 			if err != nil {
@@ -97,7 +99,10 @@ func HttpTest(
 			Headers:        headers,
 			BodyString:     string(body),
 		}
-		parseVariables(body, request.ResponseVariables, variables)
+
+		if err := parseVariables(body, request.ResponseVariables, variables); err != nil {
+			responses[i].Err = fmt.Sprintf("Failed to parse variables: %v", err)
+		}
 	}
 	return responses, finalBaseURL
 }
