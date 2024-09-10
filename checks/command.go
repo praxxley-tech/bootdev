@@ -32,6 +32,13 @@ var commandHandlers = map[string]func([]string) (string, int){
 	"cat":  executeCat,
 }
 
+// Define allowed arguments for each command if needed
+var allowedArgs = map[string][]string{
+	"ls":   {"-l", "-a"}, // Example arguments for 'ls'
+	"echo": {},           // 'echo' command can take any argument
+	"cat":  {},           // 'cat' command can take any argument
+}
+
 func CLICommand(
 	lesson api.Lesson,
 	optionalPositionalArgs []string,
@@ -52,7 +59,7 @@ func CLICommand(
 
 		// Check if the command is allowed and execute it
 		if handler, ok := commandHandlers[cmd]; ok {
-			if !validArgs(args, allowedCommands[cmd]) {
+			if !validArgs(args, allowedArgs[cmd]) {
 				responses[i].ExitCode = -1
 				responses[i].Stdout = "Invalid arguments"
 				continue
@@ -85,7 +92,7 @@ func validArgs(args []string, allowedArgs []string) bool {
 		if len(arg) == 0 {
 			return false
 		}
-		if !contains(allowedArgs, arg) {
+		if len(allowedArgs) > 0 && !contains(allowedArgs, arg) {
 			return false
 		}
 	}
