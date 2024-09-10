@@ -130,13 +130,3 @@ func isValidURL(url string) bool {
 	_, err := http.NewRequest("GET", url, nil)
 	return err == nil
 }
-
-// contains checks if a slice contains a specific element
-func contains(slice []string, item string) bool {
-	for _, elem := range slice {
-		if elem == item {
-			return true
-		}
-	}
-	return false
-}
