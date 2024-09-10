@@ -1,10 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - 'addtests/**'
-      - 'main/**'
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -22,3 +19,9 @@ jobs:
 
       - name: Run automatic tests
         run: go test -cover ./...
+
+      - name: Run Style.yml
+        run: test -z
+      
+      - name: Run Style function
+        run: go fmt
