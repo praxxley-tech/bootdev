@@ -131,8 +131,7 @@ var loginCmd = &cobra.Command{
 		viper.Set("refresh_token", creds.RefreshToken)
 		viper.Set("last_refresh", time.Now().Unix())
 
-		err = viper.WriteConfig()
-		if err != nil {
+		if err := viper.WriteConfig(); err != nil {
 			return err
 		}
 
@@ -148,10 +147,12 @@ func cors(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
 func startHTTPServer(inputChan chan string) {
 	handleSubmit := func(res http.ResponseWriter, req *http.Request) {
 		code, err := io.ReadAll(req.Body)
 		if err != nil {
+			http.Error(res, "Failed to read request body", http.StatusInternalServerError)
 			return
 		}
 		inputChan <- string(code)
@@ -161,8 +162,9 @@ func startHTTPServer(inputChan chan string) {
 
 	handleHealth := func(res http.ResponseWriter, req *http.Request) {
 		// Send 200 OK for health check
-		res.WriteHeader(http.StatusOK)
-		res.Write([]byte("OK"))
+		if _, err := res.Write([]byte("OK")); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write health check response: %v\n", err)
+		}
 	}
 
 	// Define server with timeouts
