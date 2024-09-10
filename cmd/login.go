@@ -68,7 +68,7 @@ func logoRenderer() string {
 	return output
 }
 
-var loginCmd = &cobra.Command{
+var LoginCmd = &cobra.Command{
 	Use:          "login",
 	Aliases:      []string{"auth", "authenticate", "signin"},
 	Short:        "Authenticate the CLI with your account",
@@ -166,24 +166,3 @@ func startHTTPServer(inputChan chan string) {
 		// Send 200 OK for health check
 		if _, err := res.Write([]byte("OK")); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to write health check response: %v\n", err)
-		}
-	}
-
-	// Define server with timeouts
-	srv := &http.Server{
-		Addr:         "localhost:9417", // Address and port
-		ReadTimeout:  5 * time.Second,  // Read timeout
-		WriteTimeout: 10 * time.Second, // Write timeout
-		Handler:      nil,              // Use default ServeMux
-	}
-
-	// Register handlers
-	http.Handle("/submit", cors(http.HandlerFunc(handleSubmit))) // Changed "POST /submit" to "/submit"
-	http.Handle("/health", cors(http.HandlerFunc(handleHealth)))
-
-	// Start server with configured timeouts
-	err := srv.ListenAndServe() // Use the server with timeouts
-	if err != nil && err != http.ErrServerClosed {
-		fmt.Printf("Server failed: %s\n", err)
-	}
-}
