@@ -44,17 +44,18 @@ var configureCmd = &cobra.Command{
 		if showHelp {
 			cmd.Help()
 		} else {
-			viper.WriteConfig()
+			if err := viper.WriteConfig(); err != nil {
+				fmt.Printf("Error writing config: %v\n", err)
+			}
 		}
-
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(configureCmd)
 
-	configColors = make([]*string, len(defaultColors))
-	defaultColorKeys = make([]string, len(defaultColors))
+	configColors = make([]*string, 0, len(defaultColors))    // Adjusted to start with a size of 0 and append
+	defaultColorKeys = make([]string, 0, len(defaultColors)) // Adjusted to start with a size of 0 and append
 	for color, def := range defaultColors {
 		configColors = append(configColors, configureCmd.Flags().String("color-"+color, def, "ANSI number or hex string"))
 		defaultColorKeys = append(defaultColorKeys, color)
