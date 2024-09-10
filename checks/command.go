@@ -39,6 +39,7 @@ var allowedArgs = map[string][]string{
 	"cat":  {},           // 'cat' command can take any argument
 }
 
+// CLICommand processes CLI commands and returns the results
 func CLICommand(
 	lesson api.Lesson,
 	optionalPositionalArgs []string,
@@ -77,7 +78,7 @@ func CLICommand(
 	return responses
 }
 
-// Parses a command string into command and arguments
+// parseCommand splits a command string into command and arguments
 func parseCommand(command string) (string, []string) {
 	parts := strings.Fields(command)
 	if len(parts) == 0 {
@@ -86,7 +87,7 @@ func parseCommand(command string) (string, []string) {
 	return parts[0], parts[1:]
 }
 
-// Validates arguments against allowed arguments for a command
+// validArgs validates arguments against allowed arguments for a command
 func validArgs(args []string, allowedArgs []string) bool {
 	for _, arg := range args {
 		if len(arg) == 0 {
@@ -99,7 +100,7 @@ func validArgs(args []string, allowedArgs []string) bool {
 	return true
 }
 
-// Checks if a slice contains a specific element
+// contains checks if a slice contains a specific element
 func contains(slice []string, item string) bool {
 	for _, elem := range slice {
 		if elem == item {
@@ -109,7 +110,7 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-// Replaces positional arguments in a command string
+// interpolateArgs replaces positional arguments in a command string
 func interpolateArgs(rawCommand string, optionalPositionalArgs []string) string {
 	for i, arg := range optionalPositionalArgs {
 		rawCommand = strings.ReplaceAll(rawCommand, fmt.Sprintf("$%d", i+1), arg)
