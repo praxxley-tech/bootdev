@@ -8,6 +8,13 @@ import (
 	api "github.com/bootdotdev/bootdev/client"
 )
 
+var allowedCommands = map[string]bool{
+	"ls":   true,
+	"echo": true,
+	"cat":  true,
+	// add mor commands if needed
+}
+
 func CLICommand(
 	lesson api.Lesson,
 	optionalPositionalArgs []string,
@@ -23,6 +30,12 @@ func CLICommand(
 		if len(parts) == 0 {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Invalid command"
+			continue
+		}
+
+		if !allowedCommands[parts[0]] {
+			responses[i].ExitCode = -1
+			responses[i].Stdout = "Command not allowed"
 			continue
 		}
 
@@ -44,7 +57,6 @@ func CLICommand(
 }
 
 func interpolateArgs(rawCommand string, optionalPositionalArgs []string) string {
-	// replace $1, $2, etc. with the optional positional args
 	for i, arg := range optionalPositionalArgs {
 		rawCommand = strings.ReplaceAll(rawCommand, fmt.Sprintf("$%d", i+1), arg)
 	}
