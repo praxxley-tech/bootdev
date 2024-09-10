@@ -42,7 +42,10 @@ var configureCmd = &cobra.Command{
 			}
 		}
 		if showHelp {
-			cmd.Help()
+			// Handle errors if any from the Help function
+			if err := cmd.Help(); err != nil {
+				fmt.Printf("Error showing help: %v\n", err)
+			}
 		} else {
 			if err := viper.WriteConfig(); err != nil {
 				fmt.Printf("Error writing config: %v\n", err)
