@@ -1,8 +1,7 @@
 name: Style
 
 on: 
-  workflow_dispatch
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   tests:
