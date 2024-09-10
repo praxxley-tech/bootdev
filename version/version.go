@@ -18,6 +18,12 @@ const (
 	repoName  = "bootdev"
 )
 
+// List of trusted proxies
+var trustedProxies = []string{
+	"https://proxy.golang.org",
+	// Add more trusted proxies here if necessary
+}
+
 // VersionInfo holds information about the current and latest version
 type VersionInfo struct {
 	CurrentVersion   string
@@ -66,23 +72,21 @@ func isUpdateRequired(current string, latest string) bool {
 	return semver.Compare(currentMajorMinor, latestMajorMinor) < 0
 }
 
-// getLatestVersion retrieves the latest version from the Go proxy
+// getLatestVersion retrieves the latest version from trusted Go proxies
 func getLatestVersion() (string, error) {
-	const goproxyDefault = "https://proxy.golang.org"
-	var goproxy = goproxyDefault
+	client := &http.Client{}
 
+	// Fetch the GOPROXY environment variable
 	cmd := exec.Command("go", "env", "GOPROXY")
 	output, err := cmd.Output()
 	if err == nil {
-		goproxy = strings.TrimSpace(string(output))
+		goproxy := strings.TrimSpace(string(output))
+		if !strings.Contains(goproxy, "direct") && !strings.Contains(goproxy, "off") {
+			trustedProxies = append(trustedProxies, strings.Split(goproxy, ",")...)
+		}
 	}
 
-	proxies := strings.Split(goproxy, ",")
-	if !contains(proxies, goproxyDefault) {
-		proxies = append(proxies, goproxyDefault)
-	}
-
-	for _, proxy := range proxies {
+	for _, proxy := range trustedProxies {
 		proxy = strings.TrimSpace(proxy)
 		proxy = strings.TrimRight(proxy, "/")
 		if proxy == "direct" || proxy == "off" {
@@ -90,11 +94,12 @@ func getLatestVersion() (string, error) {
 		}
 
 		url := fmt.Sprintf("%s/github.com/%s/%s/@latest", proxy, repoOwner, repoName)
+
 		if !isValidURL(url) {
 			continue
 		}
 
-		resp, err := http.Get(url)
+		resp, err := client.Get(url)
 		if err != nil {
 			continue
 		}
