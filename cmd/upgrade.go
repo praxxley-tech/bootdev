@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func UNUSED(x ...interface{
+})
 var upgradeCmd = &cobra.Command{
 	Use:     "upgrade",
 	Aliases: []string{"update"},
@@ -33,6 +35,7 @@ var upgradeCmd = &cobra.Command{
 		version := re.FindString(string(b))
 		fmt.Printf("Successfully upgraded to %s!\n", version)
 		os.Exit(0)
+		UNUSED(b)
 	},
 }
 
