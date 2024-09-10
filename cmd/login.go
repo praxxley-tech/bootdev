@@ -165,8 +165,26 @@ func startHTTPServer(inputChan chan string) {
 	handleHealth := func(res http.ResponseWriter, req *http.Request) {
 		// Send 200 OK for health check
 		if _, err := res.Write([]byte("OK")); err != nil {
+			// Use fmt.Fprintf for formatting with %v
 			fmt.Fprintf(os.Stderr, "Failed to write health check response: %v\n", err)
 		}
 	}
-	fmt.Print(handleHealth, handleSubmit)
+
+	// Define the HTTP server with timeouts
+	srv := &http.Server{
+		Addr:         "localhost:9417", // Address and port
+		ReadTimeout:  5 * time.Second,  // Read timeout
+		WriteTimeout: 10 * time.Second, // Write timeout
+		Handler:      nil,              // Use default ServeMux
+	}
+
+	// Register the handlers
+	http.Handle("/submit", cors(http.HandlerFunc(handleSubmit)))
+	http.Handle("/health", cors(http.HandlerFunc(handleHealth)))
+
+	// Start the server with the configured timeouts
+	err := srv.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		fmt.Printf("Server failed: %s\n", err)
+	}
 }
