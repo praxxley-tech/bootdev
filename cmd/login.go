@@ -19,6 +19,22 @@ import (
 	"golang.org/x/term"
 )
 
+const logo string = `
+        @@@@                                                           @@@@
+    @@@@@@@@@@@ @@@@@@@                 @@@@                @@@@@@@ @@@@@@@@@@@
+   @@@      @@@@   @@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@@@@@@@@@@   @@@@     @@@@
+  @@@                                       ...                          .. . @@@
+ @@@         BBBBBBB                           DDDDDDDD                    .   @@@
+@@@   .       BB   BB  BBBB   BBBB  BBBBBBBB    DD    DD DDDDDD DDD   DDD       @@@
+@@@  ..       BBBBBB  BB  BB BB  BB B  BB  B    DD     DD DD     DD  .DD        @@@@
+ @@@  ..      BB   BB BB  BB BB  BB    BB       DD     DD DDDD    DD DD        @@@@
+  @@@   .     BB   BB BB  BB BB  BB    BB       DD    DD  DD       DDD        @@@
+   @@@       BBBBBBB   BBBB   BBBB     BB   BB DDDDDDDD  DDDDDD     D    ..  @@@
+    @@@             .                                                     ..@@@
+     @@@@   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@
+      @@@@@@                                                          @@@@@@
+          @                                                              @`
+
 func logoRenderer() string {
 	blue := lipgloss.NewStyle().Foreground(lipgloss.Color("#7e88f7"))
 	gray := lipgloss.NewStyle().Foreground(lipgloss.Color("#7e7e81"))
@@ -51,22 +67,6 @@ func logoRenderer() string {
 	}
 	return output
 }
-
-const logo string = `
-        @@@@                                                           @@@@
-    @@@@@@@@@@@ @@@@@@@                 @@@@                @@@@@@@ @@@@@@@@@@@
-   @@@      @@@@   @@@@@@@@@@@@@@@@@@@@@@  @@@@@@@@@@@@@@@@@@@@@   @@@@     @@@@
-  @@@                                       ...                          .. . @@@
- @@@         BBBBBBB                           DDDDDDDD                    .   @@@
-@@@   .       BB   BB  BBBB   BBBB  BBBBBBBB    DD    DD DDDDDD DDD   DDD       @@@
-@@@  ..       BBBBBB  BB  BB BB  BB B  BB  B    DD     DD DD     DD  .DD        @@@@
- @@@  ..      BB   BB BB  BB BB  BB    BB       DD     DD DDDD    DD DD        @@@@
-  @@@   .     BB   BB BB  BB BB  BB    BB       DD    DD  DD       DDD        @@@
-   @@@       BBBBBBB   BBBB   BBBB     BB   BB DDDDDDDD  DDDDDD     D    ..  @@@
-    @@@             .                                                     ..@@@
-     @@@@   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   @@@
-      @@@@@@                                                          @@@@@@
-          @                                                              @`
 
 var loginCmd = &cobra.Command{
 	Use:          "login",
