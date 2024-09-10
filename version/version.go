@@ -7,15 +7,18 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"slices"
 	"strings"
 
 	"golang.org/x/mod/semver"
 )
 
-const repoOwner = "bootdotdev"
-const repoName = "bootdev"
+// Constants for repository details
+const (
+	repoOwner = "bootdotdev"
+	repoName  = "bootdev"
+)
 
+// VersionInfo holds information about the current and latest version
 type VersionInfo struct {
 	CurrentVersion   string
 	LatestVersion    string
@@ -24,6 +27,7 @@ type VersionInfo struct {
 	FailedToFetch    error
 }
 
+// FetchUpdateInfo fetches the latest version info and checks if an update is needed
 func FetchUpdateInfo(currentVersion string) VersionInfo {
 	latest, err := getLatestVersion()
 	if err != nil {
@@ -41,6 +45,7 @@ func FetchUpdateInfo(currentVersion string) VersionInfo {
 	}
 }
 
+// PromptUpdateIfAvailable prints a message if an update is available
 func (v *VersionInfo) PromptUpdateIfAvailable() {
 	if v.IsOutdated {
 		fmt.Fprintln(os.Stderr, "A new version of the bootdev CLI is available!")
@@ -49,23 +54,23 @@ func (v *VersionInfo) PromptUpdateIfAvailable() {
 	}
 }
 
-// Returns true if the current version is older than the latest.
+// isOutdated returns true if the current version is older than the latest version
 func isOutdated(current string, latest string) bool {
 	return semver.Compare(current, latest) < 0
 }
 
-// Returns true if the latest version has a higher major or minor
-// number than the current version. If you don't want to force
-// an update, you can increment the patch number instead.
+// isUpdateRequired returns true if the latest version has a higher major or minor number than the current version
 func isUpdateRequired(current string, latest string) bool {
 	latestMajorMinor := semver.MajorMinor(latest)
 	currentMajorMinor := semver.MajorMinor(current)
 	return semver.Compare(currentMajorMinor, latestMajorMinor) < 0
 }
 
+// getLatestVersion retrieves the latest version from the Go proxy
 func getLatestVersion() (string, error) {
-	goproxyDefault := "https://proxy.golang.org"
-	goproxy := goproxyDefault
+	const goproxyDefault = "https://proxy.golang.org"
+	var goproxy = goproxyDefault
+
 	cmd := exec.Command("go", "env", "GOPROXY")
 	output, err := cmd.Output()
 	if err == nil {
@@ -73,7 +78,7 @@ func getLatestVersion() (string, error) {
 	}
 
 	proxies := strings.Split(goproxy, ",")
-	if !slices.Contains(proxies, goproxyDefault) {
+	if !contains(proxies, goproxyDefault) {
 		proxies = append(proxies, goproxyDefault)
 	}
 
@@ -85,11 +90,19 @@ func getLatestVersion() (string, error) {
 		}
 
 		url := fmt.Sprintf("%s/github.com/%s/%s/@latest", proxy, repoOwner, repoName)
+		if !isValidURL(url) {
+			continue
+		}
+
 		resp, err := http.Get(url)
 		if err != nil {
 			continue
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -105,4 +118,20 @@ func getLatestVersion() (string, error) {
 	}
 
 	return "", fmt.Errorf("failed to fetch latest version")
+}
+
+// isValidURL checks if the URL is a well-formed URL
+func isValidURL(url string) bool {
+	_, err := http.NewRequest("GET", url, nil)
+	return err == nil
+}
+
+// contains checks if a slice contains a specific element
+func contains(slice []string, item string) bool {
+	for _, elem := range slice {
+		if elem == item {
+			return true
+		}
+	}
+	return false
 }
