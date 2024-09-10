@@ -20,6 +20,9 @@ var allowedCommands = map[string]bool{
 // Validates command arguments to prevent injection
 func validateArgs(args []string) bool {
 	for _, arg := range args {
+		if len(arg) == 0 {
+			return false
+		}
 		for _, r := range arg {
 			if !unicode.IsPrint(r) || strings.ContainsAny(arg, `&|;`) {
 				return false
@@ -61,7 +64,7 @@ func CLICommand(
 			continue
 		}
 
-		// Execute the command
+		// Execute the command securely
 		cmd := exec.Command(parts[0], parts[1:]...)
 
 		// Capture output
