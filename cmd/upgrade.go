@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func UNUSED(x ...interface{
-})
 var upgradeCmd = &cobra.Command{
 	Use:     "upgrade",
 	Aliases: []string{"update"},
@@ -22,20 +20,24 @@ var upgradeCmd = &cobra.Command{
 			fmt.Println("Boot.dev CLI is already up to date.")
 			return
 		}
-		// install the latest version
+		// Install the latest version
 		command := exec.Command("go", "install", "github.com/bootdotdev/bootdev@latest")
-		b, err := command.Output()
-		cobra.CheckErr(err)
+		output, err := command.CombinedOutput()
+		if err != nil {
+			fmt.Printf("Error installing latest version: %s\n", err)
+			fmt.Printf("Command output: %s\n", string(output)) // Optional: Protokolliere die Ausgabe zur Fehlerbehebung
+			cobra.CheckErr(err)
+		}
 
 		// Get the new version info
 		command = exec.Command("bootdev", "--version")
-		b, err = command.Output()
+		versionOutput, err := command.Output()
 		cobra.CheckErr(err)
 		re := regexp.MustCompile(`v\d+\.\d+\.\d+`)
-		version := re.FindString(string(b))
+		version := re.FindString(string(versionOutput))
 		fmt.Printf("Successfully upgraded to %s!\n", version)
+
 		os.Exit(0)
-		UNUSED(b)
 	},
 }
 
