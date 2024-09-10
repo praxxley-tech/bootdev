@@ -48,7 +48,6 @@ func readViperConfig(paths []string) error {
 	return viper.ReadInConfig()
 }
 
-// initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	viper.SetDefault("base_url", "https://boot.dev")
 	viper.SetDefault("api_url", "https://api.boot.dev")
@@ -58,12 +57,17 @@ func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-		err := viper.ReadInConfig()
-		cobra.CheckErr(err)
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Fprintf(os.Stderr, "Fehler beim Lesen der Konfigurationsdatei: %v\n", err)
+			os.Exit(1)
+		}
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Fehler beim Bestimmen des Home-Verzeichnisses: %v\n", err)
+			os.Exit(1)
+		}
 
 		// viper's built in config path thing sucks, let's do it ourselves
 		defaultPath := path.Join(home, ".bootdev.yaml")
@@ -71,15 +75,21 @@ func initConfig() {
 		configPaths = append(configPaths, path.Join(home, ".config", "bootdev", "config.yaml"))
 		configPaths = append(configPaths, defaultPath)
 		if err := readViperConfig(configPaths); err != nil {
-			viper.SafeWriteConfigAs(defaultPath)
+			fmt.Fprintf(os.Stderr, "Fehler beim Lesen der Konfigurationsdateien: %v\n", err)
+			if err := viper.SafeWriteConfigAs(defaultPath); err != nil {
+				fmt.Fprintf(os.Stderr, "Fehler beim Schreiben der Standard-Konfigurationsdatei: %v\n", err)
+				os.Exit(1)
+			}
 			viper.SetConfigFile(defaultPath)
-			err = viper.ReadInConfig()
-			cobra.CheckErr(err)
+			if err := viper.ReadInConfig(); err != nil {
+				fmt.Fprintf(os.Stderr, "Fehler beim Lesen der Standard-Konfigurationsdatei: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 
 	viper.SetEnvPrefix("bd")
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
 }
 
 // Chain multiple commands together.
