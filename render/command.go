@@ -195,7 +195,10 @@ func commandRenderer(
 			r.clear = false
 			r.finalized = true
 			output := termenv.NewOutput(os.Stdout)
-			output.WriteString(r.View())
+			if _, err := output.WriteString(r.View()); err != nil {
+				fmt.Fprintf(os.Stderr, "Fehler beim Schreiben des Outputs: %v\n", err)
+				return
+			}
 		}
 	}()
 	go func() {
