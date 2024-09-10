@@ -4,15 +4,28 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"unicode"
 
 	api "github.com/bootdotdev/bootdev/client"
 )
 
+// Whitelist commands
 var allowedCommands = map[string]bool{
 	"ls":   true,
 	"echo": true,
 	"cat":  true,
-	// add mor commands if needed
+	// give more commands if needed
+}
+
+func validateArgs(args []string) bool {
+	for _, arg := range args {
+		for _, r := range arg {
+			if !unicode.IsPrint(r) || strings.ContainsAny(string(r), `&|;`) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func CLICommand(
@@ -33,9 +46,16 @@ func CLICommand(
 			continue
 		}
 
+		// check whitelist
 		if !allowedCommands[parts[0]] {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Command not allowed"
+			continue
+		}
+
+		if !validateArgs(parts[1:]) {
+			responses[i].ExitCode = -1
+			responses[i].Stdout = "Invalid arguments"
 			continue
 		}
 
