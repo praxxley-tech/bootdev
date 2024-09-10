@@ -1,18 +1,35 @@
 package checks
 
 import (
-	"os/exec"
+	"fmt"
 	"strings"
 
 	api "github.com/bootdotdev/bootdev/client"
 )
 
-// Whitelist commands with predefined arguments
-var allowedCommands = map[string][]string{
-	"ls":   {"-l", "-a"}, // Example arguments for `ls`
-	"echo": {},           // `echo` command can take any argument
-	"cat":  {},           // `cat` command can take any argument
-	// Add more allowed commands with arguments as needed
+// Define internal command functions
+func executeLs(args []string) (string, int) {
+	// Implement logic for the 'ls' command
+	// For demonstration purposes, just return a static message
+	return "Simulated output for 'ls'", 0
+}
+
+func executeEcho(args []string) (string, int) {
+	// Implement logic for the 'echo' command
+	return strings.Join(args, " "), 0
+}
+
+func executeCat(args []string) (string, int) {
+	// Implement logic for the 'cat' command
+	// For demonstration purposes, just return a static message
+	return "Simulated output for 'cat'", 0
+}
+
+// Map allowed commands to their corresponding functions
+var commandHandlers = map[string]func([]string) (string, int){
+	"ls":   executeLs,
+	"echo": executeEcho,
+	"cat":  executeCat,
 }
 
 func CLICommand(
@@ -23,42 +40,31 @@ func CLICommand(
 	responses := make([]api.CLICommandResult, len(data.Commands))
 
 	for i, command := range data.Commands {
-		// Use predefined commands and arguments only
-		cmd, args := parseCommand(command.Command)
+		finalCommand := interpolateArgs(command.Command, optionalPositionalArgs)
+		responses[i].FinalCommand = finalCommand
+
+		cmd, args := parseCommand(finalCommand)
 		if cmd == "" {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Invalid command"
 			continue
 		}
 
-		// Check whitelist
-		if allowedArgs, ok := allowedCommands[cmd]; ok {
-			if !validArgs(args, allowedArgs) {
+		// Check if the command is allowed and execute it
+		if handler, ok := commandHandlers[cmd]; ok {
+			if !validArgs(args, allowedCommands[cmd]) {
 				responses[i].ExitCode = -1
 				responses[i].Stdout = "Invalid arguments"
 				continue
 			}
+
+			output, exitCode := handler(args)
+			responses[i].ExitCode = exitCode
+			responses[i].Stdout = output
 		} else {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Command not allowed"
-			continue
 		}
-
-		// Execute the command securely
-		execCmd := exec.Command(cmd, args...)
-
-		// Capture output
-		b, err := execCmd.CombinedOutput()
-		if ee, ok := err.(*exec.ExitError); ok {
-			responses[i].ExitCode = ee.ExitCode()
-		} else if err != nil {
-			responses[i].ExitCode = -2
-		} else {
-			responses[i].ExitCode = 0
-		}
-
-		// Store output
-		responses[i].Stdout = strings.TrimRight(string(b), " \n\t\r")
 	}
 
 	return responses
@@ -94,4 +100,12 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// Replaces positional arguments in a command string
+func interpolateArgs(rawCommand string, optionalPositionalArgs []string) string {
+	for i, arg := range optionalPositionalArgs {
+		rawCommand = strings.ReplaceAll(rawCommand, fmt.Sprintf("$%d", i+1), arg)
+	}
+	return rawCommand
 }
