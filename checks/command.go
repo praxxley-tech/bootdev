@@ -1,35 +1,18 @@
 package checks
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
-	"unicode"
 
 	api "github.com/bootdotdev/bootdev/client"
 )
 
-// Whitelist commands
-var allowedCommands = map[string]bool{
-	"ls":   true,
-	"echo": true,
-	"cat":  true,
-	// Weitere erlaubte Befehle hinzufügen
-}
-
-// Validates command arguments to prevent injection
-func validateArgs(args []string) bool {
-	for _, arg := range args {
-		if len(arg) == 0 {
-			return false
-		}
-		for _, r := range arg {
-			if !unicode.IsPrint(r) || strings.ContainsAny(arg, `&|;`) {
-				return false
-			}
-		}
-	}
-	return true
+// Whitelist commands with predefined arguments
+var allowedCommands = map[string][]string{
+	"ls":   {"-l", "-a"}, // Example arguments for `ls`
+	"echo": {},           // `echo` command can take any argument
+	"cat":  {},           // `cat` command can take any argument
+	// Add more allowed commands with arguments as needed
 }
 
 func CLICommand(
@@ -40,35 +23,32 @@ func CLICommand(
 	responses := make([]api.CLICommandResult, len(data.Commands))
 
 	for i, command := range data.Commands {
-		finalCommand := interpolateArgs(command.Command, optionalPositionalArgs)
-		responses[i].FinalCommand = finalCommand
-
-		parts := strings.Fields(finalCommand)
-		if len(parts) == 0 {
+		// Use predefined commands and arguments only
+		cmd, args := parseCommand(command.Command)
+		if cmd == "" {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Invalid command"
 			continue
 		}
 
 		// Check whitelist
-		if !allowedCommands[parts[0]] {
+		if allowedArgs, ok := allowedCommands[cmd]; ok {
+			if !validArgs(args, allowedArgs) {
+				responses[i].ExitCode = -1
+				responses[i].Stdout = "Invalid arguments"
+				continue
+			}
+		} else {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Command not allowed"
 			continue
 		}
 
-		// Validate arguments
-		if !validateArgs(parts[1:]) {
-			responses[i].ExitCode = -1
-			responses[i].Stdout = "Invalid arguments"
-			continue
-		}
-
 		// Execute the command securely
-		cmd := exec.Command(parts[0], parts[1:]...)
+		execCmd := exec.Command(cmd, args...)
 
 		// Capture output
-		b, err := cmd.CombinedOutput()
+		b, err := execCmd.CombinedOutput()
 		if ee, ok := err.(*exec.ExitError); ok {
 			responses[i].ExitCode = ee.ExitCode()
 		} else if err != nil {
@@ -84,9 +64,34 @@ func CLICommand(
 	return responses
 }
 
-func interpolateArgs(rawCommand string, optionalPositionalArgs []string) string {
-	for i, arg := range optionalPositionalArgs {
-		rawCommand = strings.ReplaceAll(rawCommand, fmt.Sprintf("$%d", i+1), arg)
+// Parses a command string into command and arguments
+func parseCommand(command string) (string, []string) {
+	parts := strings.Fields(command)
+	if len(parts) == 0 {
+		return "", nil
 	}
-	return rawCommand
+	return parts[0], parts[1:]
+}
+
+// Validates arguments against allowed arguments for a command
+func validArgs(args []string, allowedArgs []string) bool {
+	for _, arg := range args {
+		if len(arg) == 0 {
+			return false
+		}
+		if !contains(allowedArgs, arg) {
+			return false
+		}
+	}
+	return true
+}
+
+// Checks if a slice contains a specific element
+func contains(slice []string, item string) bool {
+	for _, elem := range slice {
+		if elem == item {
+			return true
+		}
+	}
+	return false
 }
