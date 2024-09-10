@@ -166,3 +166,4 @@ func startHTTPServer(inputChan chan string) {
 		// Send 200 OK for health check
 		if _, err := res.Write([]byte("OK")); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to write health check response: %v\n", err)
+		}
