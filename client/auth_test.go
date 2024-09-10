@@ -80,4 +80,3 @@ func TestFetchAccessToken_RequestError(t *testing.T) {
 		t.Errorf("Expected no response, got %v", resp)
 	}
 }
-
