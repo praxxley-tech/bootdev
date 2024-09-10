@@ -14,13 +14,14 @@ var allowedCommands = map[string]bool{
 	"ls":   true,
 	"echo": true,
 	"cat":  true,
-	// give more commands if needed
+	// Weitere erlaubte Befehle hinzufügen
 }
 
+// Validates command arguments to prevent injection
 func validateArgs(args []string) bool {
 	for _, arg := range args {
 		for _, r := range arg {
-			if !unicode.IsPrint(r) || strings.ContainsAny(string(r), `&|;`) {
+			if !unicode.IsPrint(r) || strings.ContainsAny(arg, `&|;`) {
 				return false
 			}
 		}
@@ -46,22 +47,25 @@ func CLICommand(
 			continue
 		}
 
-		// check whitelist
+		// Check whitelist
 		if !allowedCommands[parts[0]] {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Command not allowed"
 			continue
 		}
 
+		// Validate arguments
 		if !validateArgs(parts[1:]) {
 			responses[i].ExitCode = -1
 			responses[i].Stdout = "Invalid arguments"
 			continue
 		}
 
+		// Execute the command
 		cmd := exec.Command(parts[0], parts[1:]...)
 
-		b, err := cmd.Output()
+		// Capture output
+		b, err := cmd.CombinedOutput()
 		if ee, ok := err.(*exec.ExitError); ok {
 			responses[i].ExitCode = ee.ExitCode()
 		} else if err != nil {
@@ -70,6 +74,7 @@ func CLICommand(
 			responses[i].ExitCode = 0
 		}
 
+		// Store output
 		responses[i].Stdout = strings.TrimRight(string(b), " \n\t\r")
 	}
 
