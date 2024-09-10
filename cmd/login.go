@@ -110,7 +110,9 @@ var loginCmd = &cobra.Command{
 		go func() {
 			browser.Stdout = nil
 			browser.Stderr = nil
-			browser.OpenURL(loginUrl)
+			if err := browser.OpenURL(loginUrl); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
+			}
 		}()
 
 		// race the web server against the user's input
